@@ -10,6 +10,20 @@ using System.Runtime.InteropServices;
 
 namespace TPie.Helpers
 {
+    internal struct InvKey
+    {
+        public readonly uint itemId;
+        public readonly bool isHq;
+
+        public InvKey(uint itemId, bool isHq)
+        {
+            this.itemId = itemId;
+            this.isHq = isHq;
+        }
+
+        public override int GetHashCode() => (int) itemId;
+    }
+
     internal class ItemsHelper
     {
         private delegate void UseItem(IntPtr agent, uint itemId, uint unk1, uint unk2, short unk3);
@@ -59,7 +73,9 @@ namespace TPie.Helpers
         private Dictionary<uint, Item> _usableItems;
         private Dictionary<uint, EventItem> _usableEventItems;
 
-        private Dictionary<string, UsableItem> UsableItems = new Dictionary<string, UsableItem>();
+        // private Dictionary<String, UsableItem> UsableItems = new();
+        private Dictionary<(uint, bool), UsableItem> UsableItems = new();
+        // private Dictionary<uint, UsableItem> UsableItems = new();
 
         public unsafe void CalculateUsableItems()
         {
@@ -92,8 +108,13 @@ namespace TPie.Helpers
                             if (item->Quantity == 0) continue;
 
                             bool hq = (item->Flags & InventoryItem.ItemFlags.HQ) != 0;
-                            string hqString = hq ? "_1" : "_0";
-                            string key = $"{item->ItemID}{hqString}";
+                            // string hqString = hq ? "_1" : "_0";
+                            // string key = $"{item->ItemID}{hqString}";
+                            var key = (item->ItemID, hq);
+                            // var key = new InvKey(item->ItemID, hq);
+                            // var key = item->ItemID;
+
+                            // PluginLog.Information($"UsableItems={UsableItems.Count} _usableItems={_usableItems.Count} _usableEventItems={_usableEventItems.Count}");
 
                             if (UsableItems.TryGetValue(key, out UsableItem? usableItem) && usableItem != null)
                             {
@@ -120,8 +141,11 @@ namespace TPie.Helpers
 
         public UsableItem? GetUsableItem(uint itemId, bool hq)
         {
-            string hqString = hq ? "_1" : "_0";
-            string key = $"{itemId}{hqString}";
+            // string hqString = hq ? "_1" : "_0";
+            // string key = $"{itemId}{hqString}";
+            var key = (itemId, hq);
+            // var key = new InvKey(itemId, hq);
+            // var key = itemId;
 
             if (UsableItems.TryGetValue(key, out UsableItem? value))
             {

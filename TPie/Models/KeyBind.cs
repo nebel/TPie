@@ -2,6 +2,7 @@
 using ImGuiNET;
 using System.Collections.Generic;
 using System.Linq;
+using Dalamud.Logging;
 using TPie.Helpers;
 
 namespace TPie.Models
@@ -56,22 +57,24 @@ namespace TPie.Models
             return toggleStringPrefix + ToString() + toggleStringSufix + jobsString;
         }
 
-        public bool IsActive()
+        public bool IsActive(Ring.KeybindSharedState keybindSharedState)
         {
-            if (ChatHelper.Instance?.IsInputTextActive() == true || ImGui.GetIO().WantCaptureKeyboard)
+            // PluginLog.Information($"IsActive: {Key}");
+            if (keybindSharedState.InputCapture)
             {
                 return Toggle ? _active : false;
             }
 
-            ImGuiIOPtr io = ImGui.GetIO();
+            ImGuiIOPtr io = keybindSharedState.ImgGuiIO;
             bool ctrl = Ctrl ? io.KeyCtrl : !io.KeyCtrl;
             bool alt = Alt ? io.KeyAlt : !io.KeyAlt;
             bool shift = Shift ? io.KeyShift : !io.KeyShift;
             bool key = KeyboardHelper.Instance?.IsKeyPressed(Key) == true;
             bool active = ctrl && alt && shift && key;
+            // bool active = false;
 
             // check job
-            PlayerCharacter? player = Plugin.ClientState.LocalPlayer;
+            PlayerCharacter? player = keybindSharedState.LocalPlayer;
             if (player != null && Jobs.Count > 0)
             {
                 active &= Jobs.Contains(player.ClassJob.Id);
@@ -113,32 +116,32 @@ namespace TPie.Models
 
         public bool Draw(string id, float width)
         {
-            ImGuiIOPtr io = ImGui.GetIO();
-            string dispKey = ToString();
-
-            ImGui.PushItemWidth(width);
-            ImGui.InputText($"##{id}_Keybind", ref dispKey, 200, ImGuiInputTextFlags.ReadOnly);
-            DrawHelper.SetTooltip("Backspace to clear");
-
-            if (ImGui.IsItemActive())
-            {
-                if (KeyboardHelper.Instance?.IsKeyPressed((int)Keys.Back) == true)
-                {
-                    Reset();
-                }
-                else
-                {
-                    int keyPressed = KeyboardHelper.Instance?.GetKeyPressed() ?? 0;
-                    if (keyPressed > 0)
-                    {
-                        Ctrl = io.KeyCtrl;
-                        Alt = io.KeyAlt;
-                        Shift = io.KeyShift;
-                        Key = keyPressed;
-                        return true;
-                    }
-                }
-            }
+            // ImGuiIOPtr io = ImGui.GetIO();
+            // string dispKey = ToString();
+            //
+            // ImGui.PushItemWidth(width);
+            // ImGui.InputText($"##{id}_Keybind", ref dispKey, 200, ImGuiInputTextFlags.ReadOnly);
+            // DrawHelper.SetTooltip("Backspace to clear");
+            //
+            // if (ImGui.IsItemActive())
+            // {
+            //     if (KeyboardHelper.Instance?.IsKeyPressed((int)Keys.Back) == true)
+            //     {
+            //         Reset();
+            //     }
+            //     else
+            //     {
+            //         int keyPressed = KeyboardHelper.Instance?.GetKeyPressed() ?? 0;
+            //         if (keyPressed > 0)
+            //         {
+            //             Ctrl = io.KeyCtrl;
+            //             Alt = io.KeyAlt;
+            //             Shift = io.KeyShift;
+            //             Key = keyPressed;
+            //             return true;
+            //         }
+            //     }
+            // }
 
             return false;
         }

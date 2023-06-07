@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Dalamud.Logging;
 
 namespace TPie.Helpers
 {
@@ -41,11 +43,14 @@ namespace TPie.Helpers
         public void Update()
         {
             GetKeyboardState(_keyStates);
+            this.IsGameFocused = _IsGameFocused();
         }
+
+        public bool IsGameFocused { get; set; }
 
         public bool IsKeyPressed(int key)
         {
-            if (!IsGameFocused()) return false;
+            if (!IsGameFocused) return false;
 
             if (key != (int)Keys.Back && !_supportedKeys.Contains((Keys)key))
             {
@@ -57,7 +62,7 @@ namespace TPie.Helpers
 
         public int GetKeyPressed()
         {
-            if (!IsGameFocused()) return 0;
+            if (!IsGameFocused) return 0;
 
             for (int i = 0; i < _supportedKeys.Count; i++)
             {
@@ -198,8 +203,10 @@ namespace TPie.Helpers
         [DllImport("user32.dll")]
         private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
 
-        private bool IsGameFocused()
+        private bool _IsGameFocused()
         {
+            // return false;
+            // PluginLog.Warning("IsGameFocused");
             var foregroundWindowHandle = GetForegroundWindow();
             if (foregroundWindowHandle == IntPtr.Zero) return false;
 
@@ -207,5 +214,21 @@ namespace TPie.Helpers
 
             return activeProcessId == Environment.ProcessId;
         }
+        //
+        // /// <summary>Returns true if the current application has focus, false otherwise</summary>
+        // public bool IsGameFocused()
+        // {
+        //     var activatedHandle = GetForegroundWindow();
+        //     if (activatedHandle == IntPtr.Zero)
+        //     {
+        //         return false; // No window is currently activated
+        //     }
+        //
+        //     var procId = Process.GetCurrentProcess().Id;
+        //     int activeProcId;
+        //     GetWindowThreadProcessId(activatedHandle, out activeProcId);
+        //
+        //     return activeProcId == procId;
+        // }
     }
 }

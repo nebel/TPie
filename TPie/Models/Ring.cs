@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Dalamud.Game.ClientState.Objects.SubKinds;
+using Dalamud.Logging;
 using TPie.Config;
 using TPie.Helpers;
 using TPie.Models.Elements;
@@ -106,6 +108,12 @@ namespace TPie.Models
             HasInventoryItems = Items.FirstOrDefault(item => item is ItemElement) != null;
             _validItems = Items.Where(o => o.IsValid() && o != QuickActionElement).ToList();
 
+            // PluginLog.Information($"{Name} elements:");
+            // foreach (RingElement ringElement in Items)
+            // {
+            //     PluginLog.Information($"  {ringElement.GetType().Name}");
+            // }
+
             if (_previousCount != _validItems.Count)
             {
                 SetAnimState(_animState);
@@ -127,14 +135,30 @@ namespace TPie.Models
                 currentKeyBind.Deactivate();
             }
 
-            if (!currentKeyBind.IsActive())
+            var keybindSharedState = new KeybindSharedState();
+            if (!currentKeyBind.IsActive(keybindSharedState))
             {
                 IsActive = false;
+
                 return false;
             }
 
             IsActive = _validItems.Count > 0;
             return IsActive;
+        }
+
+        public class KeybindSharedState
+        {
+            public readonly bool InputCapture;
+            public readonly ImGuiIOPtr ImgGuiIO;
+            public readonly PlayerCharacter? LocalPlayer;
+
+            public KeybindSharedState()
+            {
+                this.InputCapture = ChatHelper.Instance?.IsInputTextActive() == true || ImGui.GetIO().WantCaptureKeyboard;
+                this.ImgGuiIO = ImGui.GetIO();
+                this.LocalPlayer = Plugin.ClientState.LocalPlayer;
+            }
         }
 
         public void Draw(string id)
