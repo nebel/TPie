@@ -135,8 +135,7 @@ namespace TPie.Models
                 currentKeyBind.Deactivate();
             }
 
-            var keybindSharedState = new KeybindSharedState();
-            if (!currentKeyBind.IsActive(keybindSharedState))
+            if (!currentKeyBind.IsActive())
             {
                 IsActive = false;
 
@@ -145,20 +144,6 @@ namespace TPie.Models
 
             IsActive = _validItems.Count > 0;
             return IsActive;
-        }
-
-        public class KeybindSharedState
-        {
-            public readonly bool InputCapture;
-            public readonly ImGuiIOPtr ImgGuiIO;
-            public readonly PlayerCharacter? LocalPlayer;
-
-            public KeybindSharedState()
-            {
-                this.InputCapture = ChatHelper.Instance?.IsInputTextActive() == true || ImGui.GetIO().WantCaptureKeyboard;
-                this.ImgGuiIO = ImGui.GetIO();
-                this.LocalPlayer = Plugin.ClientState.LocalPlayer;
-            }
         }
 
         public void Draw(string id)

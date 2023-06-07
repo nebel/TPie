@@ -57,15 +57,15 @@ namespace TPie.Models
             return toggleStringPrefix + ToString() + toggleStringSufix + jobsString;
         }
 
-        public bool IsActive(Ring.KeybindSharedState keybindSharedState)
+        public bool IsActive()
         {
             // PluginLog.Information($"IsActive: {Key}");
-            if (keybindSharedState.InputCapture)
+            if (ChatHelper.Instance?.IsInputTextActive() == true || ImGui.GetIO().WantCaptureKeyboard)
             {
                 return Toggle ? _active : false;
             }
 
-            ImGuiIOPtr io = keybindSharedState.ImgGuiIO;
+            ImGuiIOPtr io = ImGui.GetIO();
             bool ctrl = Ctrl ? io.KeyCtrl : !io.KeyCtrl;
             bool alt = Alt ? io.KeyAlt : !io.KeyAlt;
             bool shift = Shift ? io.KeyShift : !io.KeyShift;
@@ -74,7 +74,7 @@ namespace TPie.Models
             // bool active = false;
 
             // check job
-            PlayerCharacter? player = keybindSharedState.LocalPlayer;
+            PlayerCharacter? player = Plugin.ClientState.LocalPlayer;
             if (player != null && Jobs.Count > 0)
             {
                 active &= Jobs.Contains(player.ClassJob.Id);
