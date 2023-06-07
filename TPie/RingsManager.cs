@@ -1,6 +1,8 @@
-﻿using Dalamud.Logging;
+﻿using System;
+using Dalamud.Logging;
 using System.Collections.Generic;
 using TPie.Models;
+using TPie.Models.Elements;
 
 namespace TPie
 {
@@ -18,6 +20,17 @@ namespace TPie
             _skipNextClosedCheck = true;
         }
 
+        public void UpdateValidityCache()
+        {
+            foreach (Ring ring in Rings)
+            {
+                foreach (RingElement ringElement in ring.Items)
+                {
+                    ringElement.UpdateValidityCache();
+                }
+            }
+        }
+
         public void Update()
         {
             bool clearTmpKeyBinds = false;
@@ -29,7 +42,7 @@ namespace TPie
             }
             _skipNextClosedCheck = false;
 
-            _activeRing?.Update();
+            _activeRing?.Update(true);
 
             for (int i = 0; i < Rings.Count; i++)
             {
@@ -38,7 +51,7 @@ namespace TPie
                     Rings[i].SetTemporalKeybind(null);
                 }
 
-                if (_activeRing == null && Rings[i].Update())
+                if (_activeRing == null && Rings[i].Update(false))
                 {
                     _activeRing = Rings[i];
                     _activeRingIndex = i;

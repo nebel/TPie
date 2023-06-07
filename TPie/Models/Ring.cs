@@ -103,10 +103,17 @@ namespace TPie.Models
             Previewing = false;
         }
 
-        public bool Update()
+        public bool Update(bool isActive)
         {
-            HasInventoryItems = Items.FirstOrDefault(item => item is ItemElement) != null;
-            _validItems = Items.Where(o => o.IsValid() && o != QuickActionElement).ToList();
+            // HasInventoryItems = Items.FirstOrDefault(item => item is ItemElement) != null;
+            if (isActive)
+            {
+                _validItems = Items.Where(o => o.IsValid() && o != QuickActionElement).ToList();
+            }
+            else
+            {
+                _validItems = Items.Where(o => o.IsValidCache && o != QuickActionElement).ToList();
+            }
 
             // PluginLog.Information($"{Name} elements:");
             // foreach (RingElement ringElement in Items)

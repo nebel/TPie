@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using Dalamud.Hooking;
 
 namespace TPie.Helpers
 {
@@ -75,6 +76,7 @@ namespace TPie.Helpers
 
         // private Dictionary<String, UsableItem> UsableItems = new();
         private Dictionary<(uint, bool), UsableItem> UsableItems = new();
+        // private Dictionary<ItemKey, UsableItem> UsableItems = new();
         // private Dictionary<uint, UsableItem> UsableItems = new();
 
         public unsafe void CalculateUsableItems()
@@ -110,23 +112,25 @@ namespace TPie.Helpers
                             bool hq = (item->Flags & InventoryItem.ItemFlags.HQ) != 0;
                             // string hqString = hq ? "_1" : "_0";
                             // string key = $"{item->ItemID}{hqString}";
-                            var key = (item->ItemID, hq);
+                            var itemId = item->ItemID;
+                            var key = (itemId, hq);
+                            // var key = new ItemKey(itemId, hq);
                             // var key = new InvKey(item->ItemID, hq);
                             // var key = item->ItemID;
 
                             // PluginLog.Information($"UsableItems={UsableItems.Count} _usableItems={_usableItems.Count} _usableEventItems={_usableEventItems.Count}");
 
-                            if (UsableItems.TryGetValue(key, out UsableItem? usableItem) && usableItem != null)
+                            if (UsableItems.TryGetValue(key, out UsableItem? usableItem))
                             {
                                 usableItem.Count += item->Quantity;
                             }
                             else
                             {
-                                if (_usableItems.TryGetValue(item->ItemID, out Item? itemData) && itemData != null)
+                                if (_usableItems.TryGetValue(itemId, out Item? itemData))
                                 {
                                     UsableItems.Add(key, new UsableItem(itemData, hq, item->Quantity));
                                 }
-                                else if (_usableEventItems.TryGetValue(item->ItemID, out EventItem? eventItemData) && eventItemData != null)
+                                else if (_usableEventItems.TryGetValue(itemId, out EventItem? eventItemData))
                                 {
                                     UsableItems.Add(key, new UsableItem(eventItemData, hq, item->Quantity));
                                 }
@@ -138,12 +142,27 @@ namespace TPie.Helpers
             }
             catch { }
         }
+        //
+        // public readonly struct ItemKey
+        // {
+        //     public readonly uint ItemId;
+        //     public readonly bool IsHq;
+        //
+        //     public ItemKey(uint itemId, bool isHq)
+        //     {
+        //         ItemId = itemId;
+        //         IsHq = isHq;
+        //     }
+        //
+        //     // public override int GetHashCode() => (int)ItemId;
+        // }
 
         public UsableItem? GetUsableItem(uint itemId, bool hq)
         {
             // string hqString = hq ? "_1" : "_0";
             // string key = $"{itemId}{hqString}";
             var key = (itemId, hq);
+            // var key = new ItemKey(itemId, hq);
             // var key = new InvKey(itemId, hq);
             // var key = itemId;
 

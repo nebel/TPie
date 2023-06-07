@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Reflection;
+using Dalamud.Logging;
 using TPie.Config;
 using TPie.Helpers;
 using TPie.Models;
@@ -243,12 +244,22 @@ namespace TPie
             _keyBindWindow.IsOpen = true;
         }
 
+        private DateTime LastUpdate = DateTime.MinValue;
+
         private void Update(Framework framework)
         {
             if (Settings == null || ClientState.LocalPlayer == null) return;
 
             KeyboardHelper.Instance?.Update();
-            ItemsHelper.Instance?.CalculateUsableItems();
+
+            DateTime now = DateTime.Now;
+            if (now.Subtract(LastUpdate).Seconds >= 1)
+            {
+                // PluginLog.Information("updating");
+                ItemsHelper.Instance?.CalculateUsableItems();
+                RingsManager?.UpdateValidityCache();
+                LastUpdate = now;
+            }
 
             RingsManager?.Update();
         }

@@ -12,6 +12,7 @@ namespace TPie.Models.Elements
     [JsonConverter(typeof(RingElementConverter))]
     public abstract class RingElement
     {
+        public bool IsValidCache { get; set; }
         public uint IconID { get; set; }
         public ItemBorder Border { get; set; } = ItemBorder.GlobalBorderSettingsCopy();
 
@@ -40,6 +41,13 @@ namespace TPie.Models.Elements
             {
                 ImGui.SetTooltip(UserFriendlyName() + ": " + Description());
             }
+
+            UpdateValidityCache();
+        }
+
+        public void UpdateValidityCache()
+        {
+            IsValidCache = IsValid();
         }
 
         public abstract void ExecuteAction();
