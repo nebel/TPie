@@ -58,7 +58,7 @@ namespace TPie.Helpers
         private Dictionary<uint, Item> _usableItems;
         private Dictionary<uint, EventItem> _usableEventItems;
 
-        private Dictionary<string, UsableItem> UsableItems = new Dictionary<string, UsableItem>();
+        private Dictionary<(uint, bool), UsableItem> UsableItems = new();
 
         public unsafe void CalculateUsableItems()
         {
@@ -91,8 +91,8 @@ namespace TPie.Helpers
                             if (item->Quantity == 0) continue;
 
                             bool hq = (item->Flags & InventoryItem.ItemFlags.HighQuality) != 0;
-                            string hqString = hq ? "_1" : "_0";
-                            string key = $"{item->ItemId}{hqString}";
+                            uint itemId = item->ItemId;
+                            var key = (itemId, hq);
 
                             if (UsableItems.TryGetValue(key, out UsableItem? usableItem) && usableItem != null)
                             {
@@ -100,11 +100,11 @@ namespace TPie.Helpers
                             }
                             else
                             {
-                                if (_usableItems.TryGetValue(item->ItemId, out Item? itemData) && itemData != null)
+                                if (_usableItems.TryGetValue(itemId, out Item? itemData) && itemData != null)
                                 {
                                     UsableItems.Add(key, new UsableItem(itemData, hq, item->Quantity));
                                 }
-                                else if (_usableEventItems.TryGetValue(item->ItemId, out EventItem? eventItemData) && eventItemData != null)
+                                else if (_usableEventItems.TryGetValue(itemId, out EventItem? eventItemData) && eventItemData != null)
                                 {
                                     UsableItems.Add(key, new UsableItem(eventItemData, hq, item->Quantity));
                                 }
@@ -119,8 +119,7 @@ namespace TPie.Helpers
 
         public UsableItem? GetUsableItem(uint itemId, bool hq)
         {
-            string hqString = hq ? "_1" : "_0";
-            string key = $"{itemId}{hqString}";
+            var key = (itemId, hq);
 
             if (UsableItems.TryGetValue(key, out UsableItem? value))
             {
