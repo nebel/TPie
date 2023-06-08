@@ -40,12 +40,13 @@ namespace TPie.Helpers
 
         public void Update()
         {
+            _isGameFocused = IsGameFocused();
             GetKeyboardState(_keyStates);
         }
 
         public bool IsKeyPressed(int key)
         {
-            if (!IsGameFocused()) return false;
+            if (!_isGameFocused) return false;
 
             if (key != (int)Keys.Back && !_supportedKeys.Contains((Keys)key))
             {
@@ -64,7 +65,7 @@ namespace TPie.Helpers
 
         public int GetKeyPressed()
         {
-            if (!IsGameFocused()) return 0;
+            if (!_isGameFocused) return 0;
 
             for (int i = 0; i < _supportedKeys.Count; i++)
             {
@@ -77,6 +78,8 @@ namespace TPie.Helpers
 
             return 0;
         }
+
+        private bool _isGameFocused;
 
         private byte[] _keyStates;
 
