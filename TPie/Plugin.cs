@@ -252,7 +252,7 @@ namespace TPie
 
             KeyboardHelper.Instance?.Update();
 
-            DateTime now = DateTime.Now;
+            DateTime now = DateTime.UtcNow;
             if (now.Subtract(LastUpdate).Seconds >= 1)
             {
                 // PluginLog.Information("updating");
