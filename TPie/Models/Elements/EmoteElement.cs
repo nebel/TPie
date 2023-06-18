@@ -41,7 +41,7 @@ namespace TPie.Models.Elements
 
         public override bool IsValid()
         {
-            return Command.StartsWith("/");
+            return Command.StartsWith('/');
         }
 
         public override void Draw(Vector2 position, Vector2 size, float scale, bool selected, uint color, float alpha, bool tooltip, ImDrawListPtr drawList)
