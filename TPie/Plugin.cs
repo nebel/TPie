@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Reflection;
+using Dalamud.Game.Network;
 using TPie.Config;
 using TPie.Helpers;
 using TPie.Models;
@@ -30,6 +31,7 @@ namespace TPie
         public static SigScanner SigScanner { get; private set; } = null!;
         public static UiBuilder UiBuilder { get; private set; } = null!;
         public static KeyState KeyState { get; private set; } = null!;
+        public static GameNetwork GameNetwork { get; private set; } = null!;
 
         public static TexturesCache TexturesCache { get; private set; } = null!;
 
@@ -64,7 +66,8 @@ namespace TPie
             Framework framework,
             GameGui gameGui,
             SigScanner sigScanner,
-            KeyState keyState
+            KeyState keyState,
+            GameNetwork gameNetwork
         )
         {
             ClientState = clientState;
@@ -76,6 +79,7 @@ namespace TPie
             SigScanner = sigScanner;
             UiBuilder = PluginInterface.UiBuilder;
             KeyState = keyState;
+            GameNetwork = gameNetwork;
 
             if (pluginInterface.AssemblyLocation.DirectoryName != null)
             {
@@ -107,6 +111,7 @@ namespace TPie
             KeyboardHelper.Initialize();
             JobsHelper.Initialize();
             ItemsHelper.Initialize();
+            ItemCacheHelper.Initialize();
 
             TexturesCache = new TexturesCache();
             TexturesCache.LoadPluginTextures();
@@ -280,6 +285,7 @@ namespace TPie
             KeyboardHelper.Instance?.Dispose();
             JobsHelper.Instance?.Dispose();
             ItemsHelper.Instance?.Dispose();
+            ItemCacheHelper.Instance?.Dispose();
             TexturesCache.Dispose();
 
             _windowSystem.RemoveAllWindows();
