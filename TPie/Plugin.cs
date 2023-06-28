@@ -34,6 +34,7 @@ namespace TPie
         public static IKeyState KeyState { get; private set; } = null!;
         public static IPluginLog Logger { get; private set; } = null!;
         public static ITextureProvider TextureProvider { get; private set; } = null!;
+        public static IGameInventory GameInventory { get; private set; } = null!;
 
         public static string AssemblyLocation { get; private set; } = "";
         public string Name => "TPie";
@@ -71,7 +72,9 @@ namespace TPie
             IGameInteropProvider gameInteropProvider,
             IKeyState keyState,
             IPluginLog logger,
-            ITextureProvider textureProvider
+            ITextureProvider textureProvider,
+            IGameNetwork gameNetwork,
+            IGameInventory gameInventory
         )
         {
             ClientState = clientState;
@@ -86,6 +89,7 @@ namespace TPie
             KeyState = keyState;
             Logger = logger;
             TextureProvider = textureProvider;
+            GameInventory = gameInventory;
 
             if (pluginInterface.AssemblyLocation.DirectoryName != null)
             {
@@ -281,7 +285,6 @@ namespace TPie
             if (Settings == null || ClientState.LocalPlayer == null) return;
 
             KeyboardHelper.Instance?.Update();
-            ItemsHelper.Instance?.CalculateUsableItems();
 
             RingsManager?.Update();
         }
