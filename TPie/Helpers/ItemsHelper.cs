@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using Dalamud.Game.Inventory;
+using Dalamud.Game.Inventory.InventoryEventArgTypes;
 
 namespace TPie.Helpers
 {
@@ -22,6 +24,9 @@ namespace TPie.Helpers
             List<EventItem> validEventItems = eventItemsSheet?.Where(item => item.Action.RowId > 0).ToList() ?? new List<EventItem>();
 
             _usableSet = validItems.Select(i => i.RowId).Concat(validEventItems.Select(e => e.RowId)).ToHashSet();
+
+            RefreshInventories();
+            Plugin.GameInventory.InventoryChanged += OnInventoryChanged;
         }
 
         public static void Initialize() { Instance = new ItemsHelper(); }
@@ -52,15 +57,15 @@ namespace TPie.Helpers
 
         private readonly IntPtr _useItemPtr;
         private readonly HashSet<uint> _usableSet;
+        private readonly Dictionary<(uint, bool), UsableItem> _usableItems = new();
 
-        private readonly Dictionary<(uint, bool), UsableItem> UsableItems = new();
-
-        public unsafe void CalculateUsableItems()
+        public unsafe void RefreshInventories()
         {
-            UsableItems.Clear();
+            _usableItems.Clear();
 
             try
             {
+                Plugin.Logger.Debug("Refreshing inventories");
                 InventoryManager* manager = InventoryManager.Instance();
                 CheckItems(manager, InventoryType.Inventory1);
                 CheckItems(manager, InventoryType.Inventory2);
@@ -85,13 +90,13 @@ namespace TPie.Helpers
                     uint itemId = item->ItemId;
                     if (_usableSet.Contains(itemId)) {
                         bool hq = (item->Flags & InventoryItem.ItemFlags.HighQuality) != 0;
-                        var key = (itemId, hq);
+                        (uint itemId, bool hq) key = (itemId, hq);
 
-                        if (UsableItems.TryGetValue(key, out UsableItem? usableItem)) {
+                        if (_usableItems.TryGetValue(key, out UsableItem? usableItem)) {
                             usableItem.Count += item->Quantity;
                         }
                         else {
-                            UsableItems.Add(key, new UsableItem(item->Quantity, inventoryType == InventoryType.KeyItems));
+                            _usableItems.Add(key, new UsableItem(item->Quantity, inventoryType == InventoryType.KeyItems));
                         }
                     }
                 }
@@ -101,24 +106,29 @@ namespace TPie.Helpers
 
         public UsableItem? GetUsableItem(uint itemId, bool hq)
         {
-            var key = (itemId, hq);
-
-            if (UsableItems.TryGetValue(key, out UsableItem? value))
-            {
-                return value;
-            }
-
-            return null;
+            return _usableItems.GetValueOrDefault((itemId, hq));
         }
 
         public List<UsableItem> GetUsableItems()
         {
-            return UsableItems.Values.ToList();
+            return _usableItems.Values.ToList();
         }
 
         public unsafe void Use(uint itemId)
         {
             AgentInventoryContext.Instance()->UseItem(itemId, 4);
+        }
+
+        private void OnInventoryChanged(IReadOnlyCollection<InventoryEventArgs> events)
+        {
+            foreach (InventoryEventArgs inventoryEvent in events)
+            {
+                if (inventoryEvent.Item.ContainerType is GameInventoryType.KeyItems or <= GameInventoryType.Inventory4)
+                {
+                    RefreshInventories();
+                    return;
+                }
+            }
         }
     }
 
