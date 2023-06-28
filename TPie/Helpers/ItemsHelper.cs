@@ -63,6 +63,9 @@ namespace TPie.Helpers
 
         public unsafe void CalculateUsableItems()
         {
+            if (!InventoryChangeWatcher.Instance.CheckAndReset())
+                return;
+
             InventoryManager* manager = InventoryManager.Instance();
             InventoryType[] inventoryTypes = new InventoryType[]
             {
