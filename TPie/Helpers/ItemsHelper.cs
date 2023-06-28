@@ -61,6 +61,9 @@ namespace TPie.Helpers
 
         public unsafe void CalculateUsableItems()
         {
+            if (!InventoryChangeWatcher.Instance.CheckAndReset())
+                return;
+
             UsableItems.Clear();
 
             try

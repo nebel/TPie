@@ -33,6 +33,7 @@ namespace TPie
         public static IKeyState KeyState { get; private set; } = null!;
         public static IPluginLog Logger { get; private set; } = null!;
         public static ITextureProvider TextureProvider { get; private set; } = null!;
+        public static IGameNetwork GameNetwork { get; private set; } = null!;
 
         public static string AssemblyLocation { get; private set; } = "";
         public string Name => "TPie";
@@ -70,7 +71,8 @@ namespace TPie
             IGameInteropProvider gameInteropProvider,
             IKeyState keyState,
             IPluginLog logger,
-            ITextureProvider textureProvider
+            ITextureProvider textureProvider,
+            IGameNetwork gameNetwork
         )
         {
             ClientState = clientState;
@@ -85,6 +87,7 @@ namespace TPie
             KeyState = keyState;
             Logger = logger;
             TextureProvider = textureProvider;
+            GameNetwork = gameNetwork;
 
             if (pluginInterface.AssemblyLocation.DirectoryName != null)
             {
@@ -115,6 +118,7 @@ namespace TPie
             ChatHelper.Initialize();
             KeyboardHelper.Initialize();
             JobsHelper.Initialize();
+            InventoryChangeWatcher.Initialize();
             ItemsHelper.Initialize();
             WotsitHelper.Initialize();
 
@@ -322,6 +326,7 @@ namespace TPie
             JobsHelper.Instance?.Dispose();
             ItemsHelper.Instance?.Dispose();
             WotsitHelper.Instance?.Dispose();
+            InventoryChangeWatcher.Instance?.Dispose();
 
             _windowSystem.RemoveAllWindows();
 
