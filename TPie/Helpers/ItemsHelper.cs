@@ -1,5 +1,4 @@
-﻿using Dalamud.Logging;
-using FFXIVClientStructs.FFXIV.Client.Game;
+﻿using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
@@ -21,11 +20,11 @@ namespace TPie.Helpers
 
             ExcelSheet<Item>? itemsSheet = Plugin.DataManager.GetExcelSheet<Item>();
             List<Item> validItems = itemsSheet?.Where(item => item.ItemAction.Row > 0).ToList() ?? new List<Item>();
-            _usableItems = validItems.ToDictionary(item => item.RowId);
 
             ExcelSheet<EventItem>? eventItemsSheet = Plugin.DataManager.GetExcelSheet<EventItem>();
             List<EventItem> validEventItems = eventItemsSheet?.Where(item => item.Action.Row > 0).ToList() ?? new List<EventItem>();
-            _usableEventItems = validEventItems.ToDictionary(item => item.RowId);
+
+            _usableSet = validItems.Select(i => i.RowId).Concat(validEventItems.Select(e => e.RowId)).ToHashSet();
         }
 
         public static void Initialize() { Instance = new ItemsHelper(); }
@@ -54,67 +53,53 @@ namespace TPie.Helpers
         }
         #endregion
 
-        private IntPtr _useItemPtr = IntPtr.Zero;
-        private Dictionary<uint, Item> _usableItems;
-        private Dictionary<uint, EventItem> _usableEventItems;
+        private readonly IntPtr _useItemPtr;
+        private readonly HashSet<uint> _usableSet;
 
-        private Dictionary<(uint, bool), UsableItem> UsableItems = new();
+        private readonly Dictionary<(uint, bool), UsableItem> UsableItems = new();
 
         public unsafe void CalculateUsableItems()
         {
-            InventoryManager* manager = InventoryManager.Instance();
-            InventoryType[] inventoryTypes = new InventoryType[]
-            {
-                InventoryType.Inventory1,
-                InventoryType.Inventory2,
-                InventoryType.Inventory3,
-                InventoryType.Inventory4,
-                InventoryType.KeyItems
-            };
-
             UsableItems.Clear();
 
             try
             {
-                foreach (InventoryType inventoryType in inventoryTypes)
-                {
-                    InventoryContainer* container = manager->GetInventoryContainer(inventoryType);
-                    if (container == null) continue;
-
-                    for (int i = 0; i < container->Size; i++)
-                    {
-                        try
-                        {
-                            InventoryItem* item = container->GetInventorySlot(i);
-                            if (item == null) continue;
-
-                            if (item->Quantity == 0) continue;
-
-                            bool hq = (item->Flags & InventoryItem.ItemFlags.HighQuality) != 0;
-                            uint itemId = item->ItemId;
-                            var key = (itemId, hq);
-
-                            if (UsableItems.TryGetValue(key, out UsableItem? usableItem) && usableItem != null)
-                            {
-                                usableItem.Count += item->Quantity;
-                            }
-                            else
-                            {
-                                if (_usableItems.TryGetValue(itemId, out Item? itemData) && itemData != null)
-                                {
-                                    UsableItems.Add(key, new UsableItem(itemData, hq, item->Quantity));
-                                }
-                                else if (_usableEventItems.TryGetValue(itemId, out EventItem? eventItemData) && eventItemData != null)
-                                {
-                                    UsableItems.Add(key, new UsableItem(eventItemData, hq, item->Quantity));
-                                }
-                            }
-                        }
-                        catch { }
-                    }
-                }
+                InventoryManager* manager = InventoryManager.Instance();
+                CheckItems(manager, InventoryType.Inventory1);
+                CheckItems(manager, InventoryType.Inventory2);
+                CheckItems(manager, InventoryType.Inventory3);
+                CheckItems(manager, InventoryType.Inventory4);
+                CheckItems(manager, InventoryType.KeyItems);
             }
             catch { }
+        }
+
+        private unsafe void CheckItems(InventoryManager* manager, InventoryType inventoryType)
+        {
+            InventoryContainer* container = manager->GetInventoryContainer(inventoryType);
+            if (container == null) return;
+
+            uint size = container->Size;
+            for (int i = 0; i < size; i++) {
+                try {
+                    InventoryItem* item = &container->Items[i];
+                    if (item->Quantity == 0) continue;
+
+                    uint itemId = item->ItemId;
+                    if (_usableSet.Contains(itemId)) {
+                        bool hq = (item->Flags & InventoryItem.ItemFlags.HighQuality) != 0;
+                        var key = (itemId, hq);
+
+                        if (UsableItems.TryGetValue(key, out UsableItem? usableItem)) {
+                            usableItem.Count += item->Quantity;
+                        }
+                        else {
+                            UsableItems.Add(key, new UsableItem(item->Quantity, inventoryType == InventoryType.KeyItems));
+                        }
+                    }
+                }
+                catch { }
+            }
         }
 
         public UsableItem? GetUsableItem(uint itemId, bool hq)
@@ -146,38 +131,9 @@ namespace TPie.Helpers
         }
     }
 
-    public class UsableItem
+    public record UsableItem(uint Count, bool IsKey)
     {
-        public readonly string Name;
-        public readonly uint ID;
-        public readonly bool IsHQ;
-        public readonly uint IconID;
-        public uint Count;
-        public readonly bool IsKey;
-
-        public UsableItem(Item item, bool hq, uint count)
-        {
-            Name = item.Name;
-            ID = item.RowId;
-            IsHQ = hq;
-            IconID = item.Icon;
-            Count = count;
-            IsKey = false;
-        }
-
-        public UsableItem(EventItem item, bool hq, uint count)
-        {
-            Name = item.Name;
-            ID = item.RowId;
-            IsHQ = hq;
-            IconID = item.Icon;
-            Count = count;
-            IsKey = true;
-        }
-
-        public override string ToString()
-        {
-            return $"UsableItem: {ID}, {Name}, {IsHQ}, {IconID}, {Count}";
-        }
+        public uint Count = Count;
+        public readonly bool IsKey = IsKey;
     }
 }
