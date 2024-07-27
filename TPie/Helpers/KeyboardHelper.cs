@@ -1,6 +1,8 @@
-﻿using System;
+﻿using FFXIVClientStructs.FFXIV.Client.System.Framework;
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using FFXIVClientStructs.FFXIV.Client.UI;
 
 namespace TPie.Helpers
 {
@@ -203,19 +205,7 @@ namespace TPie.Helpers
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetKeyboardState(byte[] keyStates);
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
-        [DllImport("user32.dll")]
-        private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
 
-        private bool IsGameFocused()
-        {
-            var foregroundWindowHandle = GetForegroundWindow();
-            if (foregroundWindowHandle == IntPtr.Zero) return false;
-
-            GetWindowThreadProcessId(foregroundWindowHandle, out var activeProcessId);
-
-            return activeProcessId == Environment.ProcessId;
-        }
+        private static unsafe bool IsGameFocused() => !Framework.Instance()->WindowInactive;
     }
 }
