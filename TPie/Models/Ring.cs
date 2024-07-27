@@ -105,17 +105,9 @@ namespace TPie.Models
 
         public bool Update()
         {
-            HasInventoryItems = Items.FirstOrDefault(item => item is ItemElement) != null;
-            _validItems = Items.Where(o => o.IsValid() && o != QuickActionElement).ToList();
-
-            if (_previousCount != _validItems.Count)
-            {
-                SetAnimState(_animState);
-                _previousCount = _validItems.Count;
-            }
-
             if (Previewing)
             {
+                UpdateValidity();
                 return true;
             }
 
@@ -138,9 +130,22 @@ namespace TPie.Models
             }
 
             _canExecuteAction = !KeyBind.Toggle || !PreventActionOnClose;
+            UpdateValidity();
 
             IsActive = _validItems.Count > 0;
             return IsActive;
+        }
+
+        private void UpdateValidity()
+        {
+            HasInventoryItems = Items.FirstOrDefault(item => item is ItemElement) != null;
+            _validItems = Items.Where(o => o.IsValid() && o != QuickActionElement).ToList();
+
+            if (_previousCount != _validItems.Count)
+            {
+                SetAnimState(_animState);
+                _previousCount = _validItems.Count;
+            }
         }
 
         public void Draw(string id)
