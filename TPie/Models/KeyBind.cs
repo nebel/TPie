@@ -2,6 +2,7 @@
 using ImGuiNET;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using TPie.Helpers;
 
 namespace TPie.Models
@@ -69,6 +70,21 @@ namespace TPie.Models
             bool shift = Shift ? io.KeyShift : !io.KeyShift;
             bool key = KeyboardHelper.Instance?.IsKeyPressed(Key) == true;
             bool active = ctrl && alt && shift && key;
+
+            if (active && (Keys)Key is Keys.LButton or Keys.RButton or Keys.MButton or Keys.XButton1 or Keys.XButton2)
+            {
+                Vector2 mousePos = ImGui.GetMousePos();
+                if (mousePos.X < 0 || mousePos.Y < 0)
+                {
+                    return false;
+                }
+
+                Vector2 vpSize = ImGui.GetMainViewport().Size;
+                if (mousePos.X > vpSize.X || mousePos.Y > vpSize.Y)
+                {
+                    return false;
+                }
+            }
 
             // check job
             IPlayerCharacter? player = Plugin.ClientState.LocalPlayer;
